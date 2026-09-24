@@ -67,7 +67,7 @@ func (w *Worker) process(ctx context.Context, task Task) Result {
 	}
 	w.logger.Info("page fetched", "url", task.URL, "status", page.StatusCode)
 
-	title, links, err := parser.Parse(bytes.NewReader(page.Body), pageURL)
+	title, links, err := parser.ParseHTML(bytes.NewReader(page.Body), pageURL)
 	if err != nil {
 		w.logger.Warn("parse HTML failed", "url", task.URL, "error", err)
 		result.Err = fmt.Errorf("parse HTML: %w", err)
