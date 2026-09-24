@@ -14,7 +14,7 @@ type Config struct {
 	Depth          int
 	Timeout        time.Duration
 	RequestTimeout time.Duration
-	OutputPath     string
+	OutputFolder   string
 	LogFolder      string
 }
 
@@ -25,7 +25,7 @@ func NewConfig(args []string) (Config, error) {
 	depth := fs.Int("depth", 0, "maximum crawl depth")
 	timeout := fs.Duration("timeout", 0, "timeout for the whole crawl (e.g. 2m)")
 	requestTimeout := fs.Duration("request-timeout", 0, "timeout for a single request (e.g. 10s)")
-	output := fs.String("output", "./out/result.json", "path to the result JSON file")
+	outputFolder := fs.String("output", "./out/result", "path to the result JSON folder")
 	logFolder := fs.String("log", "./out/logs", "path to the log folder")
 
 	if err := fs.Parse(args); err != nil {
@@ -61,8 +61,8 @@ func NewConfig(args []string) (Config, error) {
 		return Config{}, errors.New("request timeout must be greater than 0")
 	}
 
-	if len(*output) == 0 {
-		return Config{}, errors.New("output path is required")
+	if len(*outputFolder) == 0 {
+		return Config{}, errors.New("output folder is required")
 	}
 
 	if len(*logFolder) == 0 {
@@ -74,7 +74,7 @@ func NewConfig(args []string) (Config, error) {
 		Depth:          *depth,
 		Timeout:        *timeout,
 		RequestTimeout: *requestTimeout,
-		OutputPath:     *output,
+		OutputFolder:   *outputFolder,
 		LogFolder:      *logFolder,
 	}, nil
 }
