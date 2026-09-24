@@ -10,7 +10,7 @@ import (
 
 const limit = 5 << 20
 
-func Parse(page io.Reader, base *url.URL) (string, []*url.URL, error) {
+func ParseHTML(page io.Reader, base *url.URL) (string, []*url.URL, error) {
 	var links []*url.URL
 	var title string
 	tokenizer := html.NewTokenizer(io.LimitReader(page, int64(limit)))
