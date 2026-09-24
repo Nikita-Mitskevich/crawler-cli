@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -17,8 +19,22 @@ import (
 )
 
 func main() {
-	cfg := config.NewConfigMust(os.Args[1:])
+	cfg, err := config.NewConfig(os.Args[1:])
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			os.Exit(0)
+		}
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(2)
+	}
 
+	if err := run(cfg); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
+}
+
+func run(cfg config.Config) error {
 	timestamp := time.Now().UTC().Format("2006-01-02T15-04-05.000000")
 	outputPath := filepath.Join(
 		cfg.OutputFolder,
@@ -30,16 +46,16 @@ func main() {
 	)
 
 	if err := os.MkdirAll(cfg.LogFolder, 0o755); err != nil {
-		panic(fmt.Errorf("create log folder: %w", err))
+		return fmt.Errorf("create log folder: %w", err)
 	}
 	file, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		panic(fmt.Errorf("open log file: %w", err))
+		return fmt.Errorf("open log file: %w", err)
 	}
 	defer file.Close()
 	logger := slog.New(slog.NewTextHandler(file, nil))
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	ctx, cancel := context.WithTimeout(ctx, cfg.Timeout)
@@ -56,8 +72,10 @@ func main() {
 	roots := crawler.Run(ctx, opts, httpFetcher, logger)
 
 	if err := serializeAndWrite(roots, outputPath); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func serializeAndWrite(roots []*crawler.Node, path string) error {

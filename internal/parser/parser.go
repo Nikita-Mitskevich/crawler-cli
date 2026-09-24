@@ -8,12 +8,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-const limit = 5 << 20
-
 func ParseHTML(page io.Reader, base *url.URL) (string, []*url.URL, error) {
 	var links []*url.URL
 	var title string
-	tokenizer := html.NewTokenizer(io.LimitReader(page, int64(limit)))
+	tokenizer := html.NewTokenizer(page)
 	for {
 		tokenType := tokenizer.Next()
 		if tokenType == html.ErrorToken {
