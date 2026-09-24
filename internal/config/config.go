@@ -15,7 +15,7 @@ type Config struct {
 	Timeout        time.Duration
 	RequestTimeout time.Duration
 	OutputPath     string
-	LogPath        string
+	LogFolder      string
 }
 
 func NewConfig(args []string) (Config, error) {
@@ -26,7 +26,7 @@ func NewConfig(args []string) (Config, error) {
 	timeout := fs.Duration("timeout", 0, "timeout for the whole crawl (e.g. 2m)")
 	requestTimeout := fs.Duration("request-timeout", 0, "timeout for a single request (e.g. 10s)")
 	output := fs.String("output", "./out/result.json", "path to the result JSON file")
-	logPath := fs.String("log", "./out/crawler.log", "path to the log file")
+	logFolder := fs.String("log", "./out/logs", "path to the log folder")
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -65,8 +65,8 @@ func NewConfig(args []string) (Config, error) {
 		return Config{}, errors.New("output path is required")
 	}
 
-	if len(*logPath) == 0 {
-		return Config{}, errors.New("log path is required")
+	if len(*logFolder) == 0 {
+		return Config{}, errors.New("log folder is required")
 	}
 
 	return Config{
@@ -75,7 +75,7 @@ func NewConfig(args []string) (Config, error) {
 		Timeout:        *timeout,
 		RequestTimeout: *requestTimeout,
 		OutputPath:     *output,
-		LogPath:        *logPath,
+		LogFolder:      *logFolder,
 	}, nil
 }
 
