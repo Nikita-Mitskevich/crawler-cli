@@ -3,6 +3,7 @@ package crawler
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -21,7 +22,7 @@ func NewWorker(f fetcher.Fetcher, logger *slog.Logger, maxDepth int) *Worker {
 	return &Worker{fetcher: f, logger: logger, maxDepth: maxDepth}
 }
 
-func (w *Worker) Run(ctx context.Context, tasks <-chan Task, results chan<- Result) {
+func (w *Worker) Run(ctx context.Context, tasks chan Task, results chan Result) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -61,7 +62,16 @@ func (w *Worker) process(ctx context.Context, task Task) Result {
 
 	page, err := w.fetcher.Fetch(ctx, task.URL)
 	if err != nil {
-		w.logger.Warn("fetch failed", "url", task.URL, "status", page.StatusCode, "error", err)
+		switch {
+		case ctx.Err() != nil:
+			w.logger.Info("fetch aborted", "url", task.URL, "reason", ctx.Err())
+		case errors.Is(err, fetcher.ErrRedirect):
+			w.logger.Info("skipped: redirect", "url", task.URL, "status", page.StatusCode, "error", err)
+		case errors.Is(err, fetcher.ErrNotHTML):
+			w.logger.Info("skipped: not HTML", "url", task.URL, "status", page.StatusCode, "error", err)
+		default:
+			w.logger.Warn("fetch failed", "url", task.URL, "status", page.StatusCode, "error", err)
+		}
 		result.Err = err
 		return result
 	}

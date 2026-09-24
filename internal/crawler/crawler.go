@@ -15,6 +15,9 @@ type Options struct {
 }
 
 func Run(ctx context.Context, opts Options, f fetcher.Fetcher, logger *slog.Logger) []*Node {
+	if opts.Workers <= 0 {
+		opts.Workers = 10
+	}
 	tasks := make(chan Task)
 	results := make(chan Result)
 	worker := NewWorker(f, logger, opts.MaxDepth)

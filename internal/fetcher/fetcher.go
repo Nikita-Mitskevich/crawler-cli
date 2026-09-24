@@ -48,12 +48,16 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, rawURL string) (Page, error) {
 	}
 
 	defer resp.Body.Close()
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return Page{StatusCode: resp.StatusCode},
+			fmt.Errorf("%w: status %d to %q", ErrRedirect, resp.StatusCode, resp.Header.Get("Location"))
+	}
 	if resp.StatusCode != http.StatusOK {
 		return Page{StatusCode: resp.StatusCode}, fmt.Errorf("unexpected status %d", resp.StatusCode)
 	}
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "text/html") {
-		return Page{StatusCode: resp.StatusCode}, fmt.Errorf("not html: %s", ct)
+		return Page{StatusCode: resp.StatusCode}, fmt.Errorf("not html: %w", ErrNotHTML)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxPageSize))
 	if err != nil {
