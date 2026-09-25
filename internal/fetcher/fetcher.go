@@ -57,7 +57,7 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, rawURL string) (Page, error) {
 	}
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "text/html") {
-		return Page{StatusCode: resp.StatusCode}, fmt.Errorf("not html: %w", ErrNotHTML)
+		return Page{StatusCode: resp.StatusCode}, fmt.Errorf("%w: %q", ErrNotHTML, ct)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxPageSize))
 	if err != nil {
