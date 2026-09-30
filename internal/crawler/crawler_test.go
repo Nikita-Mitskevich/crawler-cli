@@ -198,3 +198,62 @@ func TestRunLimitsConcurrency(t *testing.T) {
 		t.Errorf("max concurrent requests: got %d, requests were not parallel", got)
 	}
 }
+
+func TestRunClampsWorkers(t *testing.T) {
+	tests := []struct {
+		name    string
+		workers int
+		wantMax int32
+	}{
+		{name: "too many workers", workers: 100, wantMax: maxWorkers},
+		{name: "zero workers", workers: 0, wantMax: 1},
+		{name: "negative workers", workers: -5, wantMax: 1},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var inFlight, maxInFlight atomic.Int32
+
+			links := make([]string, 30)
+			for i := range links {
+				links[i] = fmt.Sprintf("/p/%d", i)
+			}
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/html")
+				w.Write([]byte(page("Home", links...)))
+			})
+			mux.HandleFunc("/p/{n}", func(w http.ResponseWriter, r *http.Request) {
+				cur := inFlight.Add(1)
+				defer inFlight.Add(-1)
+				for {
+					m := maxInFlight.Load()
+					if cur <= m || maxInFlight.CompareAndSwap(m, cur) {
+						break
+					}
+				}
+				time.Sleep(20 * time.Millisecond)
+				w.Header().Set("Content-Type", "text/html")
+			})
+			srv := httptest.NewServer(mux)
+			defer srv.Close()
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			opts := Options{URLs: []string{srv.URL + "/"}, MaxDepth: 1, Workers: tc.workers}
+			roots := Run(ctx, opts, fetcher.NewHTTPFetcher(time.Second), discardLogger())
+
+			if ctx.Err() != nil {
+				t.Fatal("crawl did not finish before timeout")
+			}
+			if len(roots) != 1 || len(roots[0].Links) != len(links) {
+				t.Fatalf("incomplete crawl: got %d roots", len(roots))
+			}
+			if got := maxInFlight.Load(); got > tc.wantMax {
+				t.Errorf("max concurrent requests: got %d, want at most %d", got, tc.wantMax)
+			}
+		})
+	}
+}

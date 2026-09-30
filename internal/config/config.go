@@ -28,7 +28,7 @@ func NewConfig(args []string) (Config, error) {
 	requestTimeout := fs.Duration("request-timeout", 0, "timeout for a single request (e.g. 10s)")
 	outputFolder := fs.String("output", "./out/result", "path to the result JSON folder")
 	logFolder := fs.String("log", "./out/logs", "path to the log folder")
-	workers := fs.Int("workers", 0, "count of workers")
+	workers := fs.Int("workers", 10, "count of workers")
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -72,7 +72,7 @@ func NewConfig(args []string) (Config, error) {
 	}
 
 	if *workers <= 0 || *workers > 10 {
-		return Config{}, errors.New("workers count should be greater then 0 and less than or equal to 10")
+		return Config{}, errors.New("workers count should be greater than 0 and less than or equal to 10")
 	}
 
 	return Config{

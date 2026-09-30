@@ -8,6 +8,8 @@ import (
 	"github.com/Nikita-Mitskevich/crawler-cli/internal/fetcher"
 )
 
+const maxWorkers = 10
+
 type Options struct {
 	URLs     []string
 	MaxDepth int
@@ -15,6 +17,12 @@ type Options struct {
 }
 
 func Run(ctx context.Context, opts Options, f fetcher.Fetcher, logger *slog.Logger) []*Node {
+	if opts.Workers <= 0 {
+		opts.Workers = 1
+	}
+	if opts.Workers > maxWorkers {
+		opts.Workers = maxWorkers
+	}
 	tasks := make(chan Task)
 	results := make(chan Result)
 	worker := NewWorker(f, logger, opts.MaxDepth)

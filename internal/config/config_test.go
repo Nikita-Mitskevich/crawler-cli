@@ -86,7 +86,8 @@ func TestNewConfigErrors(t *testing.T) {
 		{name: "missing request timeout", args: []string{"--urls", "https://example.com", "--depth", "2", "--timeout", "1m"}},
 		{name: "invalid timeout", args: validArgs("--timeout", "abc")},
 		{name: "unknown flag", args: validArgs("--errors", "5")},
-		{name: "invalid workers count", args: validArgs("--workers", "12")},
+		{name: "invalid workers count", args: validArgs("--workers", "11")},
+		{name: "negative workers count", args: validArgs("--workers", "-1")},
 	}
 
 	for _, tc := range tests {
