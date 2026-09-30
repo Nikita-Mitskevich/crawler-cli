@@ -64,7 +64,7 @@ func run(cfg config.Config) error {
 	opts := crawler.Options{
 		URLs:     cfg.URLs,
 		MaxDepth: cfg.Depth,
-		Workers:  10,
+		Workers:  cfg.Workers,
 	}
 
 	httpFetcher := fetcher.NewHTTPFetcher(cfg.RequestTimeout)

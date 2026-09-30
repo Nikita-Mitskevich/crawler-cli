@@ -14,6 +14,7 @@ func validArgs(extra ...string) []string {
 		"--depth", "2",
 		"--timeout", "1m",
 		"--request-timeout", "10s",
+		"--workers", "10",
 	}
 	return append(args, extra...)
 }
@@ -33,6 +34,7 @@ func TestNewConfig(t *testing.T) {
 				"--request-timeout", "10s",
 				"--output", "results",
 				"--log", "logs",
+				"--workers", "10",
 			},
 			want: Config{
 				URLs:           []string{"https://google.com", "https://example.com"},
@@ -41,6 +43,7 @@ func TestNewConfig(t *testing.T) {
 				RequestTimeout: 10 * time.Second,
 				OutputFolder:   "results",
 				LogFolder:      "logs",
+				Workers:        10,
 			},
 		},
 		{
@@ -53,6 +56,7 @@ func TestNewConfig(t *testing.T) {
 				RequestTimeout: 10 * time.Second,
 				OutputFolder:   "./out/result",
 				LogFolder:      "./out/logs",
+				Workers:        10,
 			},
 		},
 	}
@@ -78,10 +82,11 @@ func TestNewConfigErrors(t *testing.T) {
 		{name: "missing urls", args: []string{"--depth", "2", "--timeout", "1m", "--request-timeout", "10s"}},
 		{name: "only commas", args: validArgs("--urls", ",,")},
 		{name: "invalid URL", args: validArgs("--urls", "example.com")},
-		{name: "zero depth", args: validArgs("--depth", "0")},
+		{name: "negative depth", args: validArgs("--depth", "-1")},
 		{name: "missing request timeout", args: []string{"--urls", "https://example.com", "--depth", "2", "--timeout", "1m"}},
 		{name: "invalid timeout", args: validArgs("--timeout", "abc")},
-		{name: "unknown flag", args: validArgs("--workers", "5")},
+		{name: "unknown flag", args: validArgs("--errors", "5")},
+		{name: "invalid workers count", args: validArgs("--workers", "12")},
 	}
 
 	for _, tc := range tests {

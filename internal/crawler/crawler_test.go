@@ -78,6 +78,13 @@ func TestRun(t *testing.T) {
 		notRequested  []string
 	}{
 		{
+			name:          "depth 0",
+			depth:         0,
+			wantTree:      "/\n",
+			wantRequested: []string{"/"},
+			notRequested:  []string{"/a", "/b"},
+		},
+		{
 			name:          "depth 2",
 			depth:         2,
 			wantTree:      "/\n  /a\n    /a/deep\n  /b\n",

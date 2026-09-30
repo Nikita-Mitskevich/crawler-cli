@@ -16,6 +16,7 @@ type Config struct {
 	RequestTimeout time.Duration
 	OutputFolder   string
 	LogFolder      string
+	Workers        int
 }
 
 func NewConfig(args []string) (Config, error) {
@@ -27,6 +28,7 @@ func NewConfig(args []string) (Config, error) {
 	requestTimeout := fs.Duration("request-timeout", 0, "timeout for a single request (e.g. 10s)")
 	outputFolder := fs.String("output", "./out/result", "path to the result JSON folder")
 	logFolder := fs.String("log", "./out/logs", "path to the log folder")
+	workers := fs.Int("workers", 0, "count of workers")
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -49,8 +51,8 @@ func NewConfig(args []string) (Config, error) {
 		return Config{}, errors.New("at least one URL is required")
 	}
 
-	if *depth <= 0 {
-		return Config{}, errors.New("crawl depth must be greater than 0")
+	if *depth < 0 {
+		return Config{}, errors.New("crawl depth must be greater than or equal to 0")
 	}
 
 	if *timeout <= 0 {
@@ -69,6 +71,10 @@ func NewConfig(args []string) (Config, error) {
 		return Config{}, errors.New("log folder is required")
 	}
 
+	if *workers <= 0 || *workers > 10 {
+		return Config{}, errors.New("workers count should be greater then 0 and less than or equal to 10")
+	}
+
 	return Config{
 		URLs:           validUrls,
 		Depth:          *depth,
@@ -76,6 +82,7 @@ func NewConfig(args []string) (Config, error) {
 		RequestTimeout: *requestTimeout,
 		OutputFolder:   *outputFolder,
 		LogFolder:      *logFolder,
+		Workers:        *workers,
 	}, nil
 }
 
